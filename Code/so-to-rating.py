@@ -1,14 +1,12 @@
 print("job started")
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import LabelEncoder
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
 from torch.optim import Adam
-import gc
 
 # Check for GPU availability and set the device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -26,22 +24,34 @@ df = pd.concat(chunks, ignore_index=True)
 print("dataset loaded")
 
 def train_test_split(df, test_size=0.2):
-    indices = df.index.tolist()
-    test_indices = np.random.choice(indices, size=int(len(df)*test_size), replace=False)
-    test_df = df.loc[test_indices]
-    train_df = df.drop(test_indices)
+    train_dfs = []
+    test_dfs = []
+    
+    # Group by user
+    for _, user_df in df.groupby('reviewerID'):
+        # Get indices for this user's ratings
+        indices = user_df.index.tolist()
+        
+        # Randomly select test indices for this user
+        n_test = int(len(indices) * test_size)
+        test_indices = np.random.choice(indices, size=n_test, replace=False)
+        
+        # Split user's ratings into train/test
+        test_dfs.append(df.loc[test_indices])
+        train_dfs.append(df.drop(test_indices))
+    
+    # Combine all users' train/test data
+    train_df = pd.concat(train_dfs, ignore_index=True)
+    test_df = pd.concat(test_dfs, ignore_index=True)
+    
     return train_df, test_df
-
-num_users = df['reviewerID'].nunique()
-num_items = df['asin'].nunique()
 
 train_df, test_df = train_test_split(df)
 
 # Define dataset class
 class AmazonRatingsDataset(Dataset):
     def __init__(self, df):
-        self.user_ids = df['reviewerID'].values
-        self.item_ids = df['asin'].values
+        self.so_score = df['so_score'].values
         self.ratings = df['overall'].values
 
     def __len__(self):
@@ -49,8 +59,7 @@ class AmazonRatingsDataset(Dataset):
 
     def __getitem__(self, idx):
         return {
-            'user_id': torch.tensor(self.user_ids[idx], dtype=torch.long),
-            'item_id': torch.tensor(self.item_ids[idx], dtype=torch.long),
+            'so_score': torch.tensor([self.so_score[idx]], dtype=torch.float32),
             'rating': torch.tensor(self.ratings[idx], dtype=torch.long)
         }
 
@@ -63,23 +72,17 @@ test_loader = DataLoader(test_dataset, batch_size=128, shuffle=False)
 
 # Define model
 class Model(nn.Module):
-    def __init__(self, num_users, num_items, embedding_dim=128):
+    def __init__(self, input_shape):
         super().__init__()
-        self.user_embedding = nn.Embedding(num_users, embedding_dim)
-        self.item_embedding = nn.Embedding(num_items, embedding_dim)
-        self.fc1 = nn.Linear(embedding_dim*2, 256)
-        self.fc2 = nn.Linear(256, 128)
-        self.fc3 = nn.Linear(128, 64)
-        self.fc4 = nn.Linear(64, 32)
-        self.fc5 = nn.Linear(32, 5)
+        self.fc1 = nn.Linear(input_shape, 1024)
+        self.fc2 = nn.Linear(1024, 512)
+        self.fc3 = nn.Linear(512, 64)
+        self.fc4 = nn.Linear(64, 5)
         self.dropout = nn.Dropout(0.3)
         self.lrelu = nn.LeakyReLU()
         
-    def forward(self, user, item):
-        user_embedding = self.user_embedding(user)
-        item_embedding = self.item_embedding(item)
-        x = torch.cat([user_embedding, item_embedding], dim=-1)
-        x = self.fc1(x)
+    def forward(self, score):
+        x = self.fc1(score)
         x = self.lrelu(x)
         x = self.dropout(x)
         x = self.fc2(x)
@@ -89,9 +92,6 @@ class Model(nn.Module):
         x = self.lrelu(x)
         x = self.dropout(x)
         x = self.fc4(x)
-        x = self.lrelu(x)
-        x = self.dropout(x)
-        x = self.fc5(x)
         return x
 
 def calculate_class_weights(targets):
@@ -100,13 +100,15 @@ def calculate_class_weights(targets):
     weights = total_samples / class_counts
     weights = torch.tensor(weights, dtype=torch.float32)
     return weights
+
     
 targets = train_df['overall'].values
 class_weights = calculate_class_weights(targets).to(device)
 
-model = Model(num_users, num_items).to(device)
+input_shape = 1
+model = Model(input_shape).to(device)
 criterion = nn.CrossEntropyLoss(weight=class_weights)
-optimizer = Adam(model.parameters(), lr=0.1)
+optimizer = Adam(model.parameters(), lr=1e-2)
 
 # Training loop
 EPOCHS = 50
@@ -115,19 +117,18 @@ test_losses = []
 train_accuracies = []
 test_accuracies = []
 
+model.train()
 for epoch in range(EPOCHS):
-    model.train()
     train_loss = 0
     correct_train = 0
     total_train = 0
 
     for batch in train_loader:
-        user = batch['user_id'].to(device)
-        item = batch['item_id'].to(device)
+        score = batch['so_score'].to(device)
         rating = (batch['rating'] - 1).to(device)
         
         optimizer.zero_grad()
-        output = model(user, item)
+        output = model(score)
         loss = criterion(output, rating)
         loss.backward()
         optimizer.step()
@@ -147,12 +148,10 @@ for epoch in range(EPOCHS):
 
     with torch.no_grad():
         for batch in test_loader:
-            # Move tensors to GPU
-            user = batch['user_id'].to(device)
-            item = batch['item_id'].to(device)
+            score = batch['so_score'].to(device)
             rating = (batch['rating'] - 1).to(device)
             
-            output = model(user, item)
+            output = model(score)
             loss = criterion(output, rating)
             test_loss += loss.item()
 
@@ -174,6 +173,9 @@ plt.ylabel('Loss')
 plt.legend()
 plt.title('Train and Test Loss over Epochs')
 plt.show()
+plt.savefig('so-to-rating-loss.png')
+
+
 plt.figure(figsize=(12, 8))
 plt.plot(range(1, EPOCHS + 1), train_accuracies, label='Train Accuracy')
 plt.plot(range(1, EPOCHS + 1), test_accuracies, label='Test Accuracy')
@@ -182,23 +184,7 @@ plt.ylabel('Accuracy')
 plt.legend()
 plt.title('Train and Test Accuracy over Epochs')
 plt.show()
-
-# Test predictions
-model.eval()
-with torch.no_grad():
-    for batch in test_loader:
-        # Move tensors to GPU
-        user = batch['user_id'].to(device)
-        item = batch['item_id'].to(device)
-        rating = (batch['rating'] - 1).to(device)
-        
-        output = model(user, item)
-        output = F.softmax(output, dim=-1)
-        preds = torch.argmax(output, dim=-1)
-        
-        print('Predictions:', preds.cpu())  
-        print('Actual:', rating.cpu())
-        break
+plt.savefig('so-to-rating-accuracy.png')
 
 # Save model
-torch.save(model.state_dict(), 'model_big.pth')
+torch.save(model.state_dict(), 'score_pred.pth')
