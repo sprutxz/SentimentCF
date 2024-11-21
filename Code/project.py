@@ -25,16 +25,6 @@ for chunk in pd.read_csv('/common/home/lms548/dev/CS-439-FinalProject/dataset/da
 df = pd.concat(chunks, ignore_index=True)
 print("dataset loaded")
 
-# Define helper functions
-def clean_data(df):
-    df.drop(columns=['reviewerName', 'verified', 'reviewTime', 'summary', 'unixReviewTime', 'style', 'vote', 'image'], inplace=True)
-    df.dropna(subset=['reviewText'], inplace=True)
-    
-def preprocess(data):
-    label_encoder = LabelEncoder()
-    data.loc[:, 'reviewerID'] = label_encoder.fit_transform(data['reviewerID'])
-    data.loc[:, 'asin'] = label_encoder.fit_transform(data['asin'])
-    
 def train_test_split(df, test_size=0.2):
     indices = df.index.tolist()
     test_indices = np.random.choice(indices, size=int(len(df)*test_size), replace=False)
@@ -42,13 +32,6 @@ def train_test_split(df, test_size=0.2):
     train_df = df.drop(test_indices)
     return train_df, test_df
 
-def split_user_group(group):
-    group = group.sample(frac=1).reset_index(drop=True)
-    train = group.iloc[:3]
-    test = group.iloc[3:5]
-    return train, test
-
-preprocess(df)
 num_users = df['reviewerID'].nunique()
 num_items = df['asin'].nunique()
 
@@ -90,28 +73,26 @@ class Model(nn.Module):
         self.fc4 = nn.Linear(64, 32)
         self.fc5 = nn.Linear(32, 5)
         self.dropout = nn.Dropout(0.3)
-        self.relu = nn.ReLU()
+        self.lrelu = nn.LeakyReLU()
         
     def forward(self, user, item):
         user_embedding = self.user_embedding(user)
         item_embedding = self.item_embedding(item)
         x = torch.cat([user_embedding, item_embedding], dim=-1)
         x = self.fc1(x)
-        x = self.relu(x)
+        x = self.lrelu(x)
         x = self.dropout(x)
         x = self.fc2(x)
-        x = self.relu(x)
+        x = self.lrelu(x)
         x = self.dropout(x)
         x = self.fc3(x)
-        x = self.relu(x)
+        x = self.lrelu(x)
         x = self.dropout(x)
         x = self.fc4(x)
+        x = self.lrelu(x)
+        x = self.dropout(x)
+        x = self.fc5(x)
         return x
-
-# Initialize model, criterion and optimizer
-# targets = train_df['overall'].values
-# class_weights = compute_class_weight(class_weight='balanced',classes=np.unique(targets), y=targets)
-# class_weights = torch.tensor(class_weights, dtype=torch.float32)
 
 def calculate_class_weights(targets):
     total_samples = len(targets)
@@ -125,7 +106,7 @@ class_weights = calculate_class_weights(targets).to(device)
 
 model = Model(num_users, num_items).to(device)
 criterion = nn.CrossEntropyLoss(weight=class_weights)
-optimizer = Adam(model.parameters(), lr=1e-2, weight_decay=1e-3)
+optimizer = Adam(model.parameters(), lr=1e-2)
 
 # Training loop
 EPOCHS = 50
