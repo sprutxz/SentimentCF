@@ -42,6 +42,7 @@ class AmazonRatingsDataset(Dataset):
     def __init__(self, df):
         self.user_ids = df['reviewerID'].values
         self.item_ids = df['asin'].values
+        self.scores = df['so_score'].values
         self.ratings = df['overall'].values
 
     def __len__(self):
@@ -51,6 +52,7 @@ class AmazonRatingsDataset(Dataset):
         return {
             'user_id': torch.tensor(self.user_ids[idx], dtype=torch.long),
             'item_id': torch.tensor(self.item_ids[idx], dtype=torch.long),
+            'score': torch.tensor(self.scores[idx], dtype=torch.float),
             'rating': torch.tensor(self.ratings[idx], dtype=torch.long)
         }
 
@@ -67,18 +69,17 @@ class Model(nn.Module):
         super().__init__()
         self.user_embedding = nn.Embedding(num_users, embedding_dim)
         self.item_embedding = nn.Embedding(num_items, embedding_dim)
-        self.fc1 = nn.Linear(embedding_dim*2, 256)
-        self.fc2 = nn.Linear(256, 128)
-        self.fc3 = nn.Linear(128, 64)
-        self.fc4 = nn.Linear(64, 32)
-        self.fc5 = nn.Linear(32, 5)
+        self.fc1 = nn.Linear(embedding_dim*2 +  1, 1024)
+        self.fc2 = nn.Linear(1024, 512)
+        self.fc3 = nn.Linear(512, 64)
+        self.fc4 = nn.Linear(64, 5)
         self.dropout = nn.Dropout(0.3)
         self.lrelu = nn.LeakyReLU()
         
-    def forward(self, user, item):
+    def forward(self, user, item, score):
         user_embedding = self.user_embedding(user)
         item_embedding = self.item_embedding(item)
-        x = torch.cat([user_embedding, item_embedding], dim=-1)
+        x = torch.cat([user_embedding, item_embedding, score], dim=-1)
         x = self.fc1(x)
         x = self.lrelu(x)
         x = self.dropout(x)
@@ -89,9 +90,6 @@ class Model(nn.Module):
         x = self.lrelu(x)
         x = self.dropout(x)
         x = self.fc4(x)
-        x = self.lrelu(x)
-        x = self.dropout(x)
-        x = self.fc5(x)
         return x
 
 def calculate_class_weights(targets):
@@ -104,7 +102,7 @@ def calculate_class_weights(targets):
 targets = train_df['overall'].values
 class_weights = calculate_class_weights(targets).to(device)
 
-model = Model(num_users, num_items).to(device)
+model = Model(num_users, num_items, 1).to(device)
 criterion = nn.CrossEntropyLoss(weight=class_weights)
 optimizer = Adam(model.parameters(), lr=0.1)
 
@@ -124,10 +122,11 @@ for epoch in range(EPOCHS):
     for batch in train_loader:
         user = batch['user_id'].to(device)
         item = batch['item_id'].to(device)
+        score = batch['score'].to(device).unsqueeze(-1)
         rating = (batch['rating'] - 1).to(device)
         
         optimizer.zero_grad()
-        output = model(user, item)
+        output = model(user, item, score)
         loss = criterion(output, rating)
         loss.backward()
         optimizer.step()
@@ -150,9 +149,10 @@ for epoch in range(EPOCHS):
             # Move tensors to GPU
             user = batch['user_id'].to(device)
             item = batch['item_id'].to(device)
+            score = batch['score'].to(device).unsqueeze(-1)
             rating = (batch['rating'] - 1).to(device)
             
-            output = model(user, item)
+            output = model(user, item, score)
             loss = criterion(output, rating)
             test_loss += loss.item()
 
@@ -182,23 +182,6 @@ plt.ylabel('Accuracy')
 plt.legend()
 plt.title('Train and Test Accuracy over Epochs')
 plt.show()
-
-# Test predictions
-model.eval()
-with torch.no_grad():
-    for batch in test_loader:
-        # Move tensors to GPU
-        user = batch['user_id'].to(device)
-        item = batch['item_id'].to(device)
-        rating = (batch['rating'] - 1).to(device)
-        
-        output = model(user, item)
-        output = F.softmax(output, dim=-1)
-        preds = torch.argmax(output, dim=-1)
-        
-        print('Predictions:', preds.cpu())  
-        print('Actual:', rating.cpu())
-        break
 
 # Save model
 torch.save(model.state_dict(), 'model_big.pth')
