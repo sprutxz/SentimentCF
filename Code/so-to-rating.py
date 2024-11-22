@@ -24,25 +24,25 @@ df = pd.concat(chunks, ignore_index=True)
 print("dataset loaded")
 
 def train_test_split(df, test_size=0.2):
-    train_dfs = []
-    test_dfs = []
+    train_indices = []
+    test_indices = []
     
-    # Group by user
+    # Group by 'reviewerID' and process each user's data
     for _, user_df in df.groupby('reviewerID'):
-        # Get indices for this user's ratings
         indices = user_df.index.tolist()
+        n_test = int(len(indices) * test_size)
         
         # Randomly select test indices for this user
-        n_test = int(len(indices) * test_size)
-        test_indices = np.random.choice(indices, size=n_test, replace=False)
+        test_sample = np.random.choice(indices, size=n_test, replace=False)
+        train_sample = list(set(indices) - set(test_sample))
         
-        # Split user's ratings into train/test
-        test_dfs.append(df.loc[test_indices])
-        train_dfs.append(df.drop(test_indices))
+        # Collect indices directly
+        test_indices.extend(test_sample)
+        train_indices.extend(train_sample)
     
-    # Combine all users' train/test data
-    train_df = pd.concat(train_dfs, ignore_index=True)
-    test_df = pd.concat(test_dfs, ignore_index=True)
+    # Create train and test splits with indexing (avoids creating many intermediate DataFrames)
+    train_df = df.loc[train_indices]
+    test_df = df.loc[test_indices]
     
     return train_df, test_df
 
@@ -84,13 +84,13 @@ class Model(nn.Module):
     def forward(self, score):
         x = self.fc1(score)
         x = self.lrelu(x)
-        x = self.dropout(x)
+        # = self.dropout(x)
         x = self.fc2(x)
         x = self.lrelu(x)
-        x = self.dropout(x)
+        #x = self.dropout(x)
         x = self.fc3(x)
         x = self.lrelu(x)
-        x = self.dropout(x)
+        #x = self.dropout(x)
         x = self.fc4(x)
         return x
 
