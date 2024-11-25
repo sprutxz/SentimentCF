@@ -33,15 +33,15 @@ n_items = train_df['asin'].max()+1
 train_dataset = AmazonRatingsDataset(train_df)
 test_dataset = AmazonRatingsDataset(test_df)
 
-train_loader = DataLoader(train_dataset, batch_size=128, shuffle=True)
-test_loader = DataLoader(test_dataset, batch_size=128, shuffle=False)
+train_loader = DataLoader(train_dataset, batch_size=1024, shuffle=True)
+test_loader = DataLoader(test_dataset, batch_size=1024, shuffle=False)
 
 class_weights = compute_class_weights(train_df)
 class_weights = torch.tensor(class_weights, dtype=torch.float32).to(DEVICE)
 
 model = NeuralCollaborativeFiltering(n_users, n_items).to(DEVICE)
 criterion = nn.CrossEntropyLoss(weight=class_weights)
-optimizer = AdamW(model.parameters(), lr=0.1, weight_decay=0.1)
+optimizer = AdamW(model.parameters(), lr=0.01, weight_decay=0.01)
 scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=0, 
                               min_lr=1e-6)
 
