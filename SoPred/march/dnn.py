@@ -5,9 +5,9 @@ This module contains the model architecture for the Amazon ratings dataset.
 import torch
 import torch.nn as nn
 
-class NeuralCollaborativeFiltering(nn.Module):
+class SoPredModel(nn.Module):
     def __init__(self, num_users, num_items, embedding_dim=128):
-        super(NeuralCollaborativeFiltering, self).__init__()
+        super().__init__()
         self.user_embedding = nn.Embedding(num_users, embedding_dim)
         self.item_embedding = nn.Embedding(num_items, embedding_dim)
         self.fc1 = nn.Linear(2*embedding_dim, 512)
