@@ -1,29 +1,34 @@
-""" 
-Thi module calculates prec@k, recall@k, F1 score and NDCG@k
-"""
-
 import math
 
 def calculate_metrics(recs, true, k):
-    recommendations  = set([rec[0] for rec in recs])
-    true_recs = set([t[0] for t in true])
+    eps = 1e-10
+    recommendations = [rec[0] for rec in recs[:k]]  # Get first k recommendations
+    true_dict = {t[0]: t[1] for t in true}  # Create mapping of item to relevance
     
     # calculate precision@k
-    precision = len(recommendations & true_recs) / k
+    precision = len(set(recommendations) & set(true_dict.keys())) / k
     
     # calculate recall@k
-    recall = len(recommendations & true_recs) / len(true_recs)
+    recall = len(set(recommendations) & set(true_dict.keys())) / len(true_dict)
     
-    # calculate F1 score
-    f1 = 2 * (precision * recall) / (precision + recall)
+    # calculate F1 score with eps to prevent division by zero
+    f1 = 2 * (precision * recall) / ((precision + recall) + eps)
     
     # calculate NDCG@k
     dcg = 0
     idcg = 0
-    for i in range(k):
-        if recommendations[i] in true_recs:
-            dcg += 1 / math.log2(i + 2)
-        idcg += 1 / math.log2(i + 2)
-    ndcg = dcg / idcg
+    
+    # Calculate DCG
+    for i, item in enumerate(recommendations):
+        if item in true_dict:
+            rel = true_dict[item]
+            dcg += rel / math.log2(i + 2)
+    
+    # Calculate IDCG
+    sorted_relevances = sorted([t[1] for t in true], reverse=True)
+    for i in range(min(k, len(sorted_relevances))):
+        idcg += sorted_relevances[i] / math.log2(i + 2)
+    
+    ndcg = dcg / (idcg + eps)
     
     return precision, recall, f1, ndcg
