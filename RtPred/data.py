@@ -49,7 +49,7 @@ def calculate_metrics(y_true, y_pred):
     accuracy = accuracy_score(y_true, y_pred)
     return rmse, mae, precision, accuracy
 
-def plot_metrics(train_losses, test_losses, precisions, accuracies, save_path='plots'):
+def plot_metrics(train_losses, test_losses, precisions, accuracies, save_path='plots2'):
     """Plot and save training metrics"""
     if not os.path.exists(save_path):
         os.makedirs(save_path)
@@ -86,4 +86,4 @@ def save_model(model, epoch, optimizer, loss, metrics, path='checkpoints'):
         'loss': loss,
         'metrics': metrics
     }
-    torch.save(checkpoint, f'{path}/model_epoch_{epoch}.pt')
+    torch.save(checkpoint, f'{path}/best_model2.pt')

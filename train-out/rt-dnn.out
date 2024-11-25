@@ -1,0 +1,51 @@
+
+Ubuntu 22.04.4 LTS5.15.0-107-generic
+----------------------------------------------------------------------------
+Machine Name:  	ilab4.cs          IP No:       128.6.13.5 2620:0:d60:ac0d::5
+Mon Nov 25 02:07:35 AM EST 2024	  Uptime:        	      185 days 12:28
+----------------------------------------------------------------------------
+Processes:     	1225              Local/SSH/X2Go/XRDP/VSCODE:	0/0/0/0/0           
+HostProxy:     	4                 TMUX/SCREEN/JUPYTER:	9/1/0
+Connections:   	64                Load/Total Users:	28/14
+Free Memory:   	272Gi of 1.0Ti    Free Swap:     	498Gi of 511Gi
+----------------------------------------------------------------------------
+CPU Info:      	AMD EPYC 7352 24-Core Processor - 96 cores 
+System CPU:    	3.57%             User CPU:      	23.26%
+CPU Idle:      	72.33%            IO Wait:       	0.84%
+----------------------------------------------------------------------------
+Login as:      	lms548            No. of Sessions:	0
+Avail.UserDisk:	                  Avail.Freespace:	5032.56 GB
+CUDA Driver:   	11.8              CUDA Cores:    	6144
+----------------------------------------------------------------------------
+
+Starting job 72872
+Epoch 1/10
+Train Loss: 1.5059, Test Loss: 1.4225
+RMSE: 1.4458, MAE: 0.9478, Precision: 0.5505, Accuracy: 0.4566
+Epoch 2/10
+Train Loss: 1.3592, Test Loss: 1.3434
+RMSE: 1.3686, MAE: 0.8655, Precision: 0.6383, Accuracy: 0.4896
+Epoch 3/10
+Train Loss: 1.2555, Test Loss: 1.3022
+RMSE: 1.3250, MAE: 0.7682, Precision: 0.6704, Accuracy: 0.5547
+Epoch 4/10
+Train Loss: 1.1986, Test Loss: 1.2939
+RMSE: 1.3106, MAE: 0.7436, Precision: 0.6734, Accuracy: 0.5625
+Epoch 5/10
+Train Loss: 1.1645, Test Loss: 1.2922
+RMSE: 1.3867, MAE: 0.8015, Precision: 0.6744, Accuracy: 0.5516
+Epoch 6/10
+Train Loss: 1.1409, Test Loss: 1.3006
+RMSE: 1.2898, MAE: 0.7443, Precision: 0.6793, Accuracy: 0.5559
+Epoch 7/10
+Train Loss: 1.1190, Test Loss: 1.2972
+RMSE: 1.2488, MAE: 0.7121, Precision: 0.6782, Accuracy: 0.5685
+Epoch 8/10
+Train Loss: 1.1045, Test Loss: 1.2977
+RMSE: 1.3164, MAE: 0.7504, Precision: 0.6732, Accuracy: 0.5665
+Epoch 9/10
+Train Loss: 1.0918, Test Loss: 1.3133
+RMSE: 1.2855, MAE: 0.7548, Precision: 0.6811, Accuracy: 0.5367
+Epoch 10/10
+Train Loss: 1.0838, Test Loss: 1.3100
+RMSE: 1.3007, MAE: 0.7677, Precision: 0.6806, Accuracy: 0.5379
