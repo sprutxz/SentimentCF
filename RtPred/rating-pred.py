@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader
 import pandas as pd
 import numpy as np
 from dataset import AmazonRatingsDataset
-from march.neumf import NeuralCollaborativeFiltering
+from march.neumf import RtPredModel
 from data import compute_class_weights, plot_metrics, calculate_metrics, save_model
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -39,7 +39,7 @@ test_loader = DataLoader(test_dataset, batch_size=128, shuffle=False)
 class_weights = compute_class_weights(train_df)
 class_weights = torch.tensor(class_weights, dtype=torch.float32).to(DEVICE)
 
-model = NeuralCollaborativeFiltering(n_users, n_items).to(DEVICE)
+model = RtPredModel(n_users, n_items).to(DEVICE)
 criterion = nn.CrossEntropyLoss(weight=class_weights)
 optimizer = AdamW(model.parameters(), lr=0.1, weight_decay=0.1)
 scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=0, 

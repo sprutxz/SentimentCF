@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader
 import pandas as pd
 import numpy as np
 from dataset import AmazonRatingsDataset
-from march.neumf import NeuralCollaborativeFiltering
+from march.neumf import SoPredModel
 from data import plot_metrics, calculate_metrics, save_model
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -34,7 +34,7 @@ test_dataset = AmazonRatingsDataset(test_df)
 train_loader = DataLoader(train_dataset, batch_size=1024, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=1024, shuffle=False)
 
-model = NeuralCollaborativeFiltering(n_users, n_items).to(DEVICE)
+model = SoPredModel(n_users, n_items).to(DEVICE)
 criterion = nn.MSELoss()
 optimizer = AdamW(model.parameters(), lr=0.1, weight_decay=0.01)
 scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=0, 
