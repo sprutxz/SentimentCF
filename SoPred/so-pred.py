@@ -36,7 +36,7 @@ test_loader = DataLoader(test_dataset, batch_size=1024, shuffle=False)
 
 model = SoPredModel(n_users, n_items).to(DEVICE)
 criterion = nn.MSELoss()
-optimizer = AdamW(model.parameters(), lr=0.1, weight_decay=0.01)
+optimizer = AdamW(model.parameters(), lr=0.01, weight_decay=0.01)
 scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=0, 
                               min_lr=1e-6)
 
