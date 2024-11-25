@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 
 class SoPredModel(nn.Module):
-    def __init__(self, num_users, num_items, nn_emb_dim=32, mf_emb_dim=8):
+    def __init__(self, num_users, num_items, nn_emb_dim=64, mf_emb_dim=32):
         super().__init__()
         self.mf_usr_emb = nn.Embedding(num_users, mf_emb_dim)
         self.mf_item_emb = nn.Embedding(num_items, mf_emb_dim)
@@ -14,11 +14,11 @@ class SoPredModel(nn.Module):
         self.nn_usr_emb = nn.Embedding(num_users, nn_emb_dim)
         self.nn_item_emb = nn.Embedding(num_items, nn_emb_dim)
         
-        self.fc1 = nn.Linear(2*nn_emb_dim, 32)
-        self.fc2 = nn.Linear(32, 16)
-        self.fc3 = nn.Linear(16, 8)
+        self.fc1 = nn.Linear(2*nn_emb_dim, 128)
+        self.fc2 = nn.Linear(128, 64)
+        self.fc3 = nn.Linear(64, 32)
         
-        self.neumf = nn.Linear(16, 1)
+        self.neumf = nn.Linear(64, 1)
         self.dropout = nn.Dropout(0.5)
         self.activation = nn.ReLU()
         
@@ -43,4 +43,3 @@ class SoPredModel(nn.Module):
         
         neumf_input = torch.cat([mf_x, x], dim=-1)
         return self.neumf(neumf_input).squeeze()
-        
