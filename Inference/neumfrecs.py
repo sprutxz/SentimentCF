@@ -46,7 +46,7 @@ for user in sampled_users:
             userid = batch['user_id'].to(DEVICE)
             itemid = batch['item_id'].to(DEVICE)
             
-            score = model1(userid, itemid).unsqueeze(-1)
+            score = model1(userid, itemid)
             
             # pred = model2(userid, itemid, score)
             
