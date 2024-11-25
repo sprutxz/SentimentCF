@@ -32,7 +32,7 @@ model2.eval()
 items = test_df['asin'].unique()
 users = test_df['reviewerID'].value_counts()
 users = users[users > 10].index
-sampled_users = set(np.random.choice(users, 1, replace=False))
+sampled_users = set(np.random.choice(users, 500, replace=False))
 
 user_items = {}
 
