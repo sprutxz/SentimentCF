@@ -6,8 +6,8 @@ import pandas as pd
 import numpy as np
 import torch
 from modelarc import SoPredModel, RtPredModel
-from Inference.dataset import InferenceDataset
-from Inference.metrics import calculate_metrics
+from dataset import InferenceDataset
+from metrics import calculate_metrics
 from torch.utils.data import DataLoader
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -32,7 +32,7 @@ model2.eval()
 items = test_df['asin'].unique()
 users = test_df['reviewerID'].value_counts()
 users = users[users > 10].index
-sampled_users = set(np.random.choice(users, 1000, replace=False))
+sampled_users = set(np.random.choice(users, 1, replace=False))
 
 user_items = {}
 
