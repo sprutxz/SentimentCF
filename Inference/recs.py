@@ -32,7 +32,7 @@ model2.eval()
 items = test_df['asin'].unique()
 users = test_df['reviewerID'].value_counts()
 users = users[users > 10].index
-sampled_users = set(np.random.choice(users, 1000, replace=False))
+sampled_users = set(np.random.choice(users, 1, replace=False))
 
 user_items = {}
 
@@ -64,6 +64,12 @@ for user in sampled_users:
     metrics_list.append(metrics)
 
 # Calculate the average metrics
-average_metrics = {key: np.mean([metric[key] for metric in metrics_list]) for key in metrics_list[0]}
+metrics_array = np.array(metrics_list)
+average_metrics = {
+    'precision': np.mean(metrics_array[:, 0]),
+    'recall': np.mean(metrics_array[:, 1]), 
+    'f1': np.mean(metrics_array[:, 2]),
+    'NDCG': np.mean(metrics_array[:, 3])
+}
 print("Average Metrics:", average_metrics)
         
