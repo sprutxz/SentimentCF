@@ -1,10 +1,11 @@
 """
-This module contains the model architecture for the Amazon ratings dataset.
+This module contains the model classes required for the inference
 """
 
 import torch
 import torch.nn as nn
 
+# Model for predicting the sentiment score
 class SoPredModel(nn.Module):
     def __init__(self, num_users, num_items, nn_emb_dim=64, mf_emb_dim=32):
         super().__init__()
@@ -44,6 +45,7 @@ class SoPredModel(nn.Module):
         neumf_input = torch.cat([mf_x, x], dim=-1)
         return self.neumf(neumf_input).squeeze()
     
+# Model for predicting the rating score
 class RtPredModel(nn.Module):
     def __init__(self, num_users, num_items, nn_emb_dim=128, mf_emb_dim=32):
         super().__init__()
@@ -83,6 +85,7 @@ class RtPredModel(nn.Module):
         neumf_input = torch.cat([mf_x, x], dim=-1)
         return self.neumf(neumf_input).squeeze()
     
+# NCF model for testing
 class NeuralCollaborativeFiltering(nn.Module):
     def __init__(self, num_users, num_items, nn_emb_dim=32, mf_emb_dim=8):
         super(NeuralCollaborativeFiltering, self).__init__()

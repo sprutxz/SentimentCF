@@ -1,5 +1,5 @@
 """
-this module provides top-k recommendations for a given user
+this module provides top-k recommendations for a given user using the Neural Collaborative Filtering model
 """
 
 import pandas as pd

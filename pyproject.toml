@@ -13,6 +13,7 @@ scikit-learn = "^1.5.2"
 matplotlib = "^3.9.2"
 torch = "^2.5.1"
 nltk = "^3.9.1"
+onnx = "^1.17.0"
 
 
 [build-system]

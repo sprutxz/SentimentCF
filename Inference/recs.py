@@ -1,5 +1,5 @@
 """
-this module provides top-k recommendations for a given user
+this module provides top-k recommendations for a given user using ther custom model architecture
 """
 
 import pandas as pd
@@ -29,10 +29,11 @@ model1.eval()
 model2 = RtPredModel(n_users, n_items).to(DEVICE)
 model2.load_state_dict(torch.load(model2_pth)['model_state_dict'])
 model2.eval()
+
 items = test_df['asin'].unique()
 users = test_df['reviewerID'].value_counts()
 users = users[users > 10].index
-sampled_users = set(np.random.choice(users, 500, replace=False))
+sampled_users = set(np.random.choice(users, 1, replace=False))
 
 user_items = {}
 
