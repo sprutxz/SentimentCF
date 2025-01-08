@@ -2,3 +2,7 @@
 /dataset
 /latex_template
 /project-files
+/train.sh
+/*/__pycache__
+/*/*/__pycache__
+/models
